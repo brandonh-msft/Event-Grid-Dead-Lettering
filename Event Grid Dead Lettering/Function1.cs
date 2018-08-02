@@ -1,30 +1,29 @@
-
-using System.IO;
+using System.Net.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Azure.WebJobs.Host;
-using Newtonsoft.Json;
 
-namespace Event Grid Dead Lettering
+namespace EventGridDeadLettering
 {
     public static class Function1
     {
+        private static readonly HttpClient _client = new HttpClient();
+
         [FunctionName("Function1")]
-        public static IActionResult Run([HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)]HttpRequest req, TraceWriter log)
+        public static IActionResult Run([HttpTrigger]dynamic req, TraceWriter log)
         {
-            log.Info("C# HTTP trigger function processed a request.");
+            log.Info(req.ToString());
 
-            string name = req.Query["name"];
+            var first = req[0];
+            if (first.eventType == @"Microsoft.EventGrid.SubscriptionValidationEvent")
+            {
+                return new OkObjectResult(new
+                {
+                    validationResponse = first.data.validationCode
+                });
+            }
 
-            string requestBody = new StreamReader(req.Body).ReadToEnd();
-            dynamic data = JsonConvert.DeserializeObject(requestBody);
-            name = name ?? data?.name;
-
-            return name != null
-                ? (ActionResult)new OkObjectResult($"Hello, {name}")
-                : new BadRequestObjectResult("Please pass a name on the query string or in the request body");
+            return new OkResult();
         }
     }
 }
