@@ -69,6 +69,6 @@ curl -X POST -H "aeg-sas-key: $key" -d "$body" $endpoint
 
 What you should see here is your Function get hit once, throw an exception. Then again 10 seconds later (EG exponential backoff has kicked in). Then again 30 seconds later. Then finally ~5 minutes after that last hit you should see the Dead Letter trigger get fired off.
 
-## Notable notes:
+## Notable notes
 - You can only customize the **number of retries** and the **lifetime of an event**. You cannot set the rate at which retries are fired off from EG to your endpoint.
 - The ~5 minute delay from the time of the last failure to the time of dead-lettering is purposeful; it will batch up multiple dead-lettered events and insert them all at once in to Blob Storage if necessary. This is a deliberate optimization and cannot be customized
